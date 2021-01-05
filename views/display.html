@@ -1,0 +1,112 @@
+<!-- This is a static file -->
+<!-- served from your routes in server.js -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- import the webpage's stylesheet -->
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/index.js" defer></script>
+  </head>
+  <body>
+    <div id="teachOrStudent">
+      <button id="goTeach">Teacher</button>
+      <button id="goStudy">Student</button>
+    </div>
+    <div id="gettingStartedTeach">
+      <div id="signup">
+        <form id="signupForm" method="post" action="/signUp">
+          <input
+            type="text"
+            id="usernameS"
+            name="usernameS"
+            placeholder="Username here"
+          />
+          <input
+            type="password"
+            id="passwordS"
+            name="passwordS"
+            placeholder="Password here"
+          />
+          <button type="submit" id="buttonSignup">Sign up</button>
+        </form>
+        <button id="buttonLoginInstead">Login here</button>
+      </div>
+      <div id="login">
+        <form id="loginForm" method="get" action="/login">
+          <input
+            type="text"
+            id="usernameL"
+            name="usernameL"
+            placeholder="Username here"
+          />
+          <input
+            type="password"
+            id="passwordL"
+            name="passwordL"
+            placeholder="Password here"
+          />
+          <button type="submit" id="buttonLogin">Login</button>
+        </form>
+        <button id="buttonSignupInstead">Sign up instead</button>
+      </div>
+    </div>
+    <div id="homePageTeach">
+      <button id="teacherSettings">Settings</button>
+      <div id="teacherHeader">
+        <h1>Hello,</h1>
+        <h2 id="teacherTrueName">Teacher</h2>
+      </div>
+      <button id="teacherStartClass">Start class</button>
+      <!-- ^^for when this button is pressed, open up extra options -->
+      <div id="teacherClassOptions">
+        <input
+          type="text"
+          id="classTimeSetting"
+          placeholder="How long is class?"
+        />
+        <label class="container">Private Room
+          <input type="checkbox" checked="checked">
+          <span class="checkmark"></span>
+        </label>
+        <button id="startClass">Start</button>
+      </div>
+    </div>
+    <div id="startedClassTeach">
+      <h1 id="teachersClass"></h1>
+      <h2 id="teachersRoomID"></h2>
+      <!-- all the members -->
+      <div id="currentStudentQueue">
+        <ol id="studentListinQueue">
+          <!-- name -->
+          <span id="studentNameInQueue"></span>
+        </ol>
+      </div>
+      <div id="boxofStudentListinClass">
+        <ol id="studentListinClass">
+          <!-- name -->
+          <span id="studentName"></span>
+        </ol>
+      </div>
+    </div>
+    <div id="gettingStartedStudent">
+      <!-- the students name -->
+      <input type="text" id="studentShownName" placeholder="Name" />
+      <input
+        type="text"
+        id="teacherRoomIDJoiner"
+        placeholder="Your teacher's room number"
+      />
+      <button id="goToTeacherRoom">Join room</button>
+    </div>
+    <div id="studentInTeachersRoom">
+      <h1 id="studentCurrentLocation"></h1>
+      <div id="teacherRoomExist"></div>
+    </div>
+  </body>
+</html>
