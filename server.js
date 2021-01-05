@@ -22,7 +22,7 @@ const saltRounds = 10;
 const connection = mysql.createConnection({
 	host: 'localhost',
 	user: 'newuser',
-	password: 'yurioIsVeryHot6969',
+	password: process.env.PASSWORD,
 	database: 'helper'
 });
 
