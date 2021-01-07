@@ -124,6 +124,7 @@ io.on('connection', socket => {
 									sessionStore.setItem('token', preToken);
 									connection.query("INSERT INTO tokens(token, expire) VALUES(?, ?)", [preToken, Date.now()], (err) => {
 										if (err) console.log("insert to tokens err", err);
+										sessionStore.setItem('teacherIDCode', row[0].roomID);
 										let myname = row[0].myname;
 										!(myname) && (myname = "teacher");
 										resolve(['toTable', preToken, myname, row[0].roomID]);
@@ -161,6 +162,8 @@ io.on('connection', socket => {
 			//use a random room code for the room
 			socket.join(userInfo.newRoomCode);
 			//create new table for this room
+			//add a boolean on the end of newRoomCode to tell if the student auto joins or not
+			userInfo.closedOrOpen ? userInfo.newRoomCode += "1" : userInfo.newRoomCoode += 0;
 			connection.query("DROP TABLE IF EXISTS " + userInfo.newRoomCode, (err) => {
 				if (err) console.log("dropping table error", err);
 				connection.query("CREATE TABLE " + userInfo.newRoomCode + "(id INT AUTO_INCREMENT, studentName VARCHAR(255) NOT NULL, needHelp TINYINT(1) NOT NULL, inQueue TINYINT(1), PRIMARY KEY(id))", (err) => {
@@ -174,27 +177,42 @@ io.on('connection', socket => {
 	});
 	socket.on('studentJoin', function(userInfo) {
 		console.log("student joined");
-		//check the room id they are trying to join
-		connection.query("SHOW TABLES LIKE ?", userInfo.teachID, (err, row) => {
+		//check the room id they are trying to join <-- need to check for both zero and one
+		connection.query("SHOW TABLES LIKE ?", userInfo.teachID + "1", (err, row1) => {
 			//no answer, room is not active
 			if (err) console.log("show teacher table err");
-			if (row.length) {
-				console.log("tablea live");
-				connection.query("INSERT INTO " + userInfo.teachID + "(studentName, needHelp, inQueue) VALUES(?, ?, ?)", [userInfo.name, 0, 0], (err, row) => {
-					if (err) console.log("selecting room error", err);
-					socket.join(userInfo.teachID);
-					//notify the main socket only
-					connection.query("SELECT teacherSocket FROM teachers WHERE roomID=?", userInfo.teachID, (err, row) => {
-						if (err) console.log("teacher socket selection err");
-						console.log("the student joined", row[0].teacherSocket);
-						//based on locked room will decide if the person joins or is put in queue
-						io.to(row[0].teacherSocket).emit('studentHasJoinedTheRoom', {name: userInfo.name});
-						socket.emit('teacherRoomJoined');
+			connection.query("SHOW TABLES LIKE ?", userInfo.teachID + "0", (err, row2) => {
+				if (err) console.log("show table non private err");
+				//based on if we get row1 or row2, slightly different thing will happen for student
+				if (row1.length || row2.length) {
+					let studentAllowance;
+					//closed room
+					row1.length ? studentAllowance = true : studentAllowance = false;
+					console.log("true false check", studentAllowance);
+					connection.query("INSERT INTO " + userInfo.teachID + "(studentName, needHelp, inQueue) VALUES(?, ?, ?)", [userInfo.name, 0, 0], (err, row) => {
+						if (err) console.log("selecting room error", err);
+						socket.join(userInfo.teachID);
+						//notify the main socket only
+						connection.query("SELECT teacherSocket, myname FROM teachers WHERE roomID=?", userInfo.teachID, (err, row) => {
+							if (err) console.log("teacher socket selection err");
+							//based on locked room will decide if the person joins or is put in queue
+							//now!
+							let studentBool, teacherEmit;
+							studentAllowance ? (studentBool = 1, teacherEmit = "studentHasJoinedTheRoomQueue") :
+							(studentBool = 0, teacherEmit = "studentHasJoinedTheRoom");
+								io.to(row[0].teacherSocket).emit(teacherEmit, {
+									name: userInfo.name
+								});
+							socket.emit('teacherRoomJoined', {
+								teacherName: socket[0].myname,
+								queueOrJoin: studentBool
+							});
+						});
 					});
-				});
-			} else {
-				socket.emit('teachRoomNoExist');
-			}
+				} else {
+					socket.emit('teachRoomNoExist');
+				}
+			});
 		});
 	});
 	socket.on('disconnect', function() {
@@ -206,7 +224,7 @@ io.on('connection', socket => {
 		if (token != null) {
 			connection.query("DELETE FROM tokens WHERE token=?", token, (err) => {
 				if (err) console.log("token deletion error", err);
-				connection.query("DROP TABLE " + sessionStore.getItem('username'), (err) => {
+				connection.query("DROP TABLE " + sessionStore.getItem('teacherIDCode'), (err) => {
 					if (err) console.log("drop table error");
 				});
 			});

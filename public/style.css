@@ -1,3 +1,18 @@
+ol, li {
+  list-style-type: none;
+}
+
+html {
+  height: 100vh;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Candara';
+  background-color: #2d3436;
+  background-image: linear-gradient(315deg, #2d3436 0%, #000000 74%);
+}
+
 /* Customize the label (the container) */
 .container {
   display: block;
@@ -10,6 +25,7 @@
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
+  left: 27%;
 }
 
 /* Hide the browser's default checkbox */
@@ -64,4 +80,204 @@
   -webkit-transform: rotate(45deg);
   -ms-transform: rotate(45deg);
   transform: rotate(45deg);
+}
+
+:root {
+  --border-size: 0.125rem;
+  --duration: 250ms;
+  --ease: cubic-bezier(0.215, 0.61, 0.355, 1);
+  --font-family: monospace;
+  --color-primary: white;
+  --color-secondary: black;
+  --color-tertiary: dodgerblue;
+  --shadow: rgba(0, 0, 0, 0.1);
+  --space: 1rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.animeButton {
+  background: #222;
+  height: 50px;
+  min-width: 250px;
+  border: none;
+  border-radius: 4px;
+  left: 17%;
+  color: #eee;
+  font-size: 40px;
+  position: relative;
+  transition: 1s;
+  -webkit-tap-highlight-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding-top: 5px;
+}
+
+.animeButton1 {
+  background: #222;
+  height: 50px;
+  min-width: 250px;
+  border: none;
+  border-radius: 4px;
+  color: #eee;
+  font-size: 40px;
+  position: relative;
+  transition: 1s;
+  -webkit-tap-highlight-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding-top: 5px;
+}
+
+#teacherSettings {
+  position: absolute;
+  left: 3%;
+  top: 3%;
+}
+
+#teacherStartClass, #startClass {
+  position: relative;
+  left: 14.5%;
+}
+
+#circle, #bigCircle {
+  width: 250px;
+  height: 5px;
+  background: transparent;
+  border-radius: 50%;
+  position: absolute;
+  top: 0;
+  left: 50%;
+  overflow: hidden;
+  transition: 500ms;
+}
+
+.noselect {
+  -webkit-touch-callout: none;
+    -webkit-user-select: none;
+     -khtml-user-select: none;
+       -moz-user-select: none;
+        -ms-user-select: none;
+            user-select: none;
+}
+
+.animeButton:hover, .animeButton1:hover {
+  background: transparent;
+}
+
+.animeButton:hover #circle, .animeButton:hover #bigCircle, .animeButton1:hover #circle {
+  height: 50px;
+  left: 0;
+  border-radius: 0;
+  border-bottom: 2px solid #eee;
+}
+
+/*By Lucas Oliveira <-- How can people css?*/
+.form__group {
+  position: relative;
+  left: -25%;
+  padding: 15px 0 0;
+  margin-top: 10px;
+  width: 150%;
+}
+
+.form__field {
+  font-family: inherit;
+  width: 100%;
+  border: 0;
+  border-bottom: 2px solid #9b9b9b;
+  outline: 0;
+  font-size: 1.3rem;
+  color: #ffff;
+  padding: 7px 0;
+  background: transparent;
+  transition: border-color 0.2s;
+
+  &::placeholder {
+    color: transparent;
+  }
+
+  &:placeholder-shown ~ .form__label {
+    font-size: 1.3rem;
+    cursor: text;
+    top: 20px;
+  }
+}
+
+.form__label {
+  position: absolute;
+  top: 0;
+  display: block;
+  transition: 0.2s;
+  font-size: 1rem;
+  color: #9b9b9b;
+}
+
+.form__field:focus {
+  ~ .form__label {
+    position: absolute;
+    top: 0;
+    display: block;
+    transition: 0.2s;
+    font-size: 1rem;
+    color: #11998e;
+    font-weight:700;    
+  }
+  padding-bottom: 6px;  
+  font-weight: 700;
+  border-width: 3px;
+  border-image: linear-gradient(to right, #11998e, #38ef7d);
+  border-image-slice: 1;
+}
+/* reset input */
+.form__field{
+  &:required,&:invalid { box-shadow:none; }
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  font-size: 1.5rem;
+}
+
+#teachersClass {
+  position: absolute;
+  top: -10%;
+  left: 0%;
+  width: 100%;
+  text-align: center;
+  color: #11998e;
+  font-size: 120px;
+  margin-bottom: -40%;
+}
+
+#teachersRoomID {
+  text-align: center;
+  font-size: 50px;
+  position: absolute;
+  top: 11%;
+  width: 100%;
+  left: 0%;
+}
+
+#teacherGreetings {
+  color: #11998e;
+  font-size: 150px;
+  top: -20%;
+  margin-top: -95%;
+  margin-bottom: -20%;
+}
+
+#teacherTrueName {
+  text-align: center;
+  font-size: 50px;
 }

@@ -13,6 +13,8 @@ $("#goTeach").click(() => {
 	$("#teachOrStudent").hide();
 	$("#gettingStartedTeach").show();
 	$("#signup").hide();
+	console.log($("#buttonSignupInstead").width());
+	$("#bigCircle").css("width", $("#buttonSignupInstead").width() + 12);
 });
 
 $("#goStudy").click(() => {
@@ -25,12 +27,25 @@ $("#buttonSignupInstead").click(() => {
 	$("#login").toggle();
 });
 
-$("#signupForm").submit(function(event) {
+function signUp() {
 	socket.emit('signUp', {
 		username: $("#usernameS").val(),
 		password: $("#passwordS").val()
 	});
-	event.preventDefault();
+	sessionStorage.setItem("username", $("#usernameS").val());
+	$("#usernameS").val("");
+	$("#passwordS").val("");
+}
+
+$("#buttonSignup").click(function() {
+	signUp();
+});
+
+$("#passwordS").keypress(event => {
+  let key = event.keyCode;
+  if (key == 13) {
+    signUp();
+  }
 });
 
 $("#buttonLoginInstead").click(() => {
@@ -38,7 +53,7 @@ $("#buttonLoginInstead").click(() => {
 	$("#login").toggle();
 });
 
-$("#loginForm").submit(function(event) {
+function login() {
 	socket.emit('login', {
 		username: $("#usernameL").val(),
 		password: $("#passwordL").val()
@@ -46,7 +61,17 @@ $("#loginForm").submit(function(event) {
 	sessionStorage.setItem("username", $("#usernameL").val());
 	$("#usernameL").val("");
 	$("#passwordL").val("");
-	event.preventDefault();
+}
+
+$("#buttonLogin").click(function() {
+	login();
+});
+
+$("#passwordL").keypress(event => {
+  let key = event.keyCode;
+  if (key == 13) {
+    login();
+  }
 });
 
 socket.on('failedAuth', () => {
@@ -64,7 +89,6 @@ socket.on('incorrectPassword', () => {
 
 socket.on('toTable', (serverInfo) => {
 	//redirect to the home page for specific users (need to send username);
-	console.log(serverInfo.yourRoomCode);
 	window.sessionStorage.setItem('token', serverInfo.token);
 	window.sessionStorage.setItem('username', serverInfo.username);
 	window.sessionStorage.setItem('teachname', serverInfo.teachname);
@@ -78,25 +102,41 @@ socket.on('toTable', (serverInfo) => {
 });
 
 $("#teacherStartClass").click(() => {
-	$("#teacherClassOptions").show();
+	$("#teacherClassOptions").toggle();
 });
 
 $("#startClass").click(() => {
 	$("#homePageTeach").hide();
+	window.sessionStorage.setItem('closedOrOpenRoom', $("#whatHappensToStudent").prop("checked"));
 	socket.emit('teacherStartingClass', {
 		usernameCode: window.sessionStorage.getItem('username'),
 		token: window.sessionStorage.getItem('token'),
-		newRoomCode: window.sessionStorage.getItem('teachRoomCode')
+		newRoomCode: window.sessionStorage.getItem('teachRoomCode'),
+		closedOrOpen: window.sessionStorage.getItem('closedOrOpenRoom')
 	});
 	socket.on('cleanTeacherRoomStart', () => {
 		$("#startedClassTeach").show();
+		window.sessionStorage.getItem('closedOrOpenRoom') ? $("#currentStudentQueue").show() : $("#currentStudentQueue").hide();
 		$("#teachersClass").text(window.sessionStorage.getItem('teachname') + "'s room");
 		$("#teachersRoomID").text("Current room code - " + window.sessionStorage.getItem('teachRoomCode'));
 	});
 });
 
-socket.on('studentHasJoinedTheRoom', (serverInfo)=> {
-	console.log(serverInfo.name)
+socket.on('studentHasJoinedTheRoomQueue', (serverInfo) => {
+	$("#studentListinQueue").append(
+		"<li id='" + serverInfo.name + "'> <span>" + serverInfo.name + "</span> " + 
+		"<button class='accepting' id='allow'> Allow </button> <button class='denying' id='deny'> Deny </button> </li>"
+	);
+});
+
+socket.on('studentHasJoinedTheRoom', (serverInfo) => {
+	$("#studentListInClass").append(
+		"<li> <span>" + serverInfo.name + "</span> </li>"
+	);
+});
+
+$(".accepting").click(()=> {
+	//find the id of said button - related to student
 });
 
 $("#goToTeacherRoom").click(() => {
@@ -113,7 +153,8 @@ $("#goToTeacherRoom").click(() => {
 		$("#teacherRoomExist").hide();
 		$("#studentInTeachersRoom").show();
 	});
-	socket.on('teacherRoomJoined', ()=> {
-		console.log("joined room");
+	socket.on('teacherRoomJoined', (serverInfo) => {
+		$("#teacherRoomExist").show();
+		$("#teacgerNameForRoom").text(serverInfo.teachername + "'s room");
 	});
 });

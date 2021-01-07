@@ -15,66 +15,47 @@
   </head>
   <body>
     <div id="teachOrStudent">
-      <button id="goTeach">Teacher</button>
-      <button id="goStudy">Student</button>
+      <button class="animeButton1" id="goTeach"><span class="noselect">Teacher</span><div id="circle"></div></button>
+      <button class="animeButton1" id="goStudy"><span class="noselect">Student</span><div id="circle"></div></button>
     </div>
     <div id="gettingStartedTeach">
-      <div id="signup">
-        <form id="signupForm" method="post" action="/signUp">
-          <input
-            type="text"
-            id="usernameS"
-            name="usernameS"
-            placeholder="Username here"
-          />
-          <input
-            type="password"
-            id="passwordS"
-            name="passwordS"
-            placeholder="Password here"
-          />
-          <button type="submit" id="buttonSignup">Sign up</button>
-        </form>
-        <button id="buttonLoginInstead">Login here</button>
+      <div id="signup" class="form__group field">
+        <input type="text" class="form__field" id="usernameS" name="usernameS" placeholder="Username"/>
+        <label for="usernameS" class="form__label"></label>
+        <br>
+        <input type="password" class="form__field" id="passwordS" name="passwordS" placeholder="Password"/>
+        <label for="passwordS" class="form__label"></label>
+        <br>
+        <button id="buttonSignup" class="animeButton"><span class="noselect">Sign up</span><div id="circle"></div></button>
+        <button class="animeButton" id="buttonLoginInstead"><span class="noselect">Login here</span><div id="circle"></div></button>
       </div>
-      <div id="login">
-        <form id="loginForm" method="get" action="/login">
-          <input
-            type="text"
-            id="usernameL"
-            name="usernameL"
-            placeholder="Username here"
-          />
-          <input
-            type="password"
-            id="passwordL"
-            name="passwordL"
-            placeholder="Password here"
-          />
-          <button type="submit" id="buttonLogin">Login</button>
-        </form>
-        <button id="buttonSignupInstead">Sign up instead</button>
+      <div id="login" class="form__group field">
+        <input type="text" class="form__field" id="usernameL" name="usernameL" placeholder="Username"/>
+        <label for="usernameL" class="form__label"></label>
+        <br>
+        <input type="password" class="form__field" id="passwordL" name="passwordL" placeholder="Password"/>
+        <label for="passwordL" class="form__label"></label>
+        <br>
+        <button id="buttonLogin" class="animeButton"><span class="noselect">Login</span><div id="circle"></div></button>
+        <button class="animeButton" id="buttonSignupInstead"><span class="noselect">Sign up here</span><div id="bigCircle"></div></button>
       </div>
     </div>
     <div id="homePageTeach">
-      <button id="teacherSettings">Settings</button>
+      <button class="animeButton1" id="teacherSettings">Settings<div id="circle"></div></button>
       <div id="teacherHeader">
-        <h1>Hello,</h1>
+        <h1 id="teacherGreetings">Hello,</h1>
         <h2 id="teacherTrueName">Teacher</h2>
       </div>
-      <button id="teacherStartClass">Start class</button>
+      <button class="animeButton1" id="teacherStartClass"><span class="noselect">Start class</span><div id="circle"></div></button>
       <!-- ^^for when this button is pressed, open up extra options -->
       <div id="teacherClassOptions">
-        <input
-          type="text"
-          id="classTimeSetting"
-          placeholder="How long is class?"
-        />
+        <input type="text" class="form__field" id="classTimeSetting" name="classTimeSetting" placeholder="How long is class?"/>
+        <label for="classTimeSetting" class="form__label"></label>
         <label class="container">Private Room
-          <input type="checkbox" checked="checked">
+          <input type="checkbox" name="whatHappensToStudent" id="whatHappensToStudent" checked="checked">
           <span class="checkmark"></span>
         </label>
-        <button id="startClass">Start</button>
+        <button class="animeButton1" id="startClass"><span class="noselect">Start</span><div id="circle"></div></button>
       </div>
     </div>
     <div id="startedClassTeach">
@@ -83,14 +64,19 @@
       <!-- all the members -->
       <div id="currentStudentQueue">
         <ol id="studentListinQueue">
-          <!-- name -->
-          <span id="studentNameInQueue"></span>
+          <li>
+            <!-- name -->
+            <span id="studentNameInQueue"></span>
+            <!-- buttons for allowing or denying -->
+          </li>
         </ol>
       </div>
       <div id="boxofStudentListinClass">
         <ol id="studentListinClass">
-          <!-- name -->
-          <span id="studentName"></span>
+          <li>
+            <!-- name -->
+            <span></span>
+          </li>
         </ol>
       </div>
     </div>
@@ -106,7 +92,9 @@
     </div>
     <div id="studentInTeachersRoom">
       <h1 id="studentCurrentLocation"></h1>
-      <div id="teacherRoomExist"></div>
+      <div id="teacherRoomExist">
+        <span id="teacherNameForRoom"></span>
+      </div>
     </div>
   </body>
 </html>
