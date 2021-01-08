@@ -41,7 +41,14 @@
       </div>
     </div>
     <div id="homePageTeach">
-      <button class="animeButton1" id="teacherSettings">Settings<div id="circle"></div></button>
+      <button id="settingsPage"> Click </button>
+      <!-- modal -->
+      <div class="settingsPage">
+        <button id="closeSettingsPage">Close</button>
+        <input type="text" class="form__field" id="nameChange" name="nameChange" placeholder="Change display name"/>
+        <label for="nameChange" class="form__label"></label>
+        <button id="confirmSettingChanges">Confirm</button>
+      </div><!-- overlay -->
       <div id="teacherHeader">
         <h1 id="teacherGreetings">Hello,</h1>
         <h2 id="teacherTrueName">Teacher</h2>
@@ -49,7 +56,7 @@
       <button class="animeButton1" id="teacherStartClass"><span class="noselect">Start class</span><div id="circle"></div></button>
       <!-- ^^for when this button is pressed, open up extra options -->
       <div id="teacherClassOptions">
-        <input type="text" class="form__field" id="classTimeSetting" name="classTimeSetting" placeholder="How long is class?"/>
+        <input type="text" class="form__field" id="classTimeSetting" name="classTimeSetting" placeholder="Class length"/>
         <label for="classTimeSetting" class="form__label"></label>
         <label class="container">Private Room
           <input type="checkbox" name="whatHappensToStudent" id="whatHappensToStudent" checked="checked">
@@ -63,6 +70,10 @@
       <h2 id="teachersRoomID"></h2>
       <!-- all the members -->
       <div id="currentStudentQueue">
+        <a href="#" class="notification">
+          <button id="showStudentQueue">Student queue</button>
+          <span class="badge"></span>
+        </a>
         <ol id="studentListinQueue">
           <li>
             <!-- name -->

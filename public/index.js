@@ -13,7 +13,6 @@ $("#goTeach").click(() => {
 	$("#teachOrStudent").hide();
 	$("#gettingStartedTeach").show();
 	$("#signup").hide();
-	console.log($("#buttonSignupInstead").width());
 	$("#bigCircle").css("width", $("#buttonSignupInstead").width() + 12);
 });
 
@@ -42,10 +41,10 @@ $("#buttonSignup").click(function() {
 });
 
 $("#passwordS").keypress(event => {
-  let key = event.keyCode;
-  if (key == 13) {
-    signUp();
-  }
+	let key = event.keyCode;
+	if (key == 13) {
+		signUp();
+	}
 });
 
 $("#buttonLoginInstead").click(() => {
@@ -68,10 +67,10 @@ $("#buttonLogin").click(function() {
 });
 
 $("#passwordL").keypress(event => {
-  let key = event.keyCode;
-  if (key == 13) {
-    login();
-  }
+	let key = event.keyCode;
+	if (key == 13) {
+		login();
+	}
 });
 
 socket.on('failedAuth', () => {
@@ -97,8 +96,44 @@ socket.on('toTable', (serverInfo) => {
 	$("#gettingStartedTeach").hide();
 	$("#teacherTrueName").text(window.sessionStorage.getItem('teachname'));
 	$("#homePageTeach").show();
+	$(".settingsPage").hide();
+	$("#confirmSettingChanges").hide();
 	$("#teacherClassOptions").hide();
 	socket.emit('goingHome');
+});
+
+$("#settingsPage").click(function() {
+	$(".settingsPage").toggle();
+	$("#teacherStartClass").toggle();
+	//if options are visible and you're pulling open settings, close
+	//if options are not visible and you're pulling, nothing
+	//need to save current options value when closing if it was open
+	if ($(".settingsPage").is(":visible") && $("#teacherClassOptions").is(":visible")) {
+		//need to hide it, but restore it when we exit
+		window.sessionStorage.setItem('teacherClassOptionsStillThere', true);
+		$("#teacherClassOptions").hide();
+	} else if ($(".settingsPage").is(":hidden") && window.sessionStorage.getItem('teacherClassOptionsStillThere')) {
+		//check to see if the window should be opened
+		$("#teacherClassOptions").show();
+	}
+});
+
+$("#nameChange").keypress(event => {
+	//if any event, enable to confirm button at the bottom of the page
+	$("#confirmSettingChanges").show();
+});
+
+$("#closeSettingsPage").click(function() {
+	$(".settingsPage").hide();
+	$("#teacherStartClass").show();
+	if (window.sessionStorage.getItem('teacherClassOptionsStillThere')) {
+		$("#teacherClassOptions").show();
+	}
+});
+
+$("#confirmSettingChanges").click(function() {
+	$(".settingsPage").toggle();
+	$("#teacherStartClass").toggle();
 });
 
 $("#teacherStartClass").click(() => {
@@ -116,15 +151,18 @@ $("#startClass").click(() => {
 	});
 	socket.on('cleanTeacherRoomStart', () => {
 		$("#startedClassTeach").show();
-		window.sessionStorage.getItem('closedOrOpenRoom') ? $("#currentStudentQueue").show() : $("#currentStudentQueue").hide();
+		window.sessionStorage.getItem('closedOrOpenRoom') ? ($("#currentStudentQueue").show(), window.sessionStorage.setItem('queueLengt', 0)) : $("#currentStudentQueue").hide();
 		$("#teachersClass").text(window.sessionStorage.getItem('teachname') + "'s room");
 		$("#teachersRoomID").text("Current room code - " + window.sessionStorage.getItem('teachRoomCode'));
 	});
 });
 
 socket.on('studentHasJoinedTheRoomQueue', (serverInfo) => {
+	//make notification bar show
+	window.sessionStorage.setItem('queueLength', window.sessionStorage.getItem('queueLength') + 1);
+	$(".badge").val(window.sessionStorage.getItem('queueLength'));
 	$("#studentListinQueue").append(
-		"<li id='" + serverInfo.name + "'> <span>" + serverInfo.name + "</span> " + 
+		"<li id='" + serverInfo.name + "'> <span>" + serverInfo.name + "</span> " +
 		"<button class='accepting' id='allow'> Allow </button> <button class='denying' id='deny'> Deny </button> </li>"
 	);
 });
@@ -135,7 +173,7 @@ socket.on('studentHasJoinedTheRoom', (serverInfo) => {
 	);
 });
 
-$(".accepting").click(()=> {
+$(".accepting").click(() => {
 	//find the id of said button - related to student
 });
 
