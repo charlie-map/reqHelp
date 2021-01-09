@@ -25,7 +25,7 @@ html {
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
-  left: 27%;
+  left: 45%;
 }
 
 /* Hide the browser's default checkbox */
@@ -173,6 +173,7 @@ html {
 #closeSettingsPage {
   background-color: #2d3436;
   position: relative;
+  display: block;
   color: #fff;
   border: none;
   padding: 1.25em 2em;
@@ -224,11 +225,13 @@ html {
 
 #startClass {
   position: relative;
-  left: 24.5%;
+  left: 27%;
 }
 
 #classTimeSetting {
   width: 145%;
+  position: relative;
+  left: 4%;
 }
 
 #teacherClassOptions {
@@ -371,26 +374,40 @@ body {
   font-size: 50px;
 }
 
-.notification {
-  background-color: #555;
-  color: white;
-  text-decoration: none;
-  padding: 15px 26px;
-  position: relative;
-  display: inline-block;
-  border-radius: 2px;
-}
-
-.notification:hover {
-  background: red;
-}
-
-.notification .badge {
+#currentStudentQueueOpen {
   position: absolute;
-  top: -10px;
-  right: -10px;
-  padding: 5px 10px;
-  border-radius: 50%;
-  background-color: red;
-  color: white;
+  left: 5%;
+  top: 25%;
+  background-color: #11998E;
+  color: #fff;
+  border: none;
+  padding: 1.25em 2em;
+  font-size: 0.75em;
+  letter-spacing: 1px;
+  cursor: pointer;
+  box-shadow: 0 10px 20px rgba(0,0,0,.1);
+  transition: background 0.25s cubic-bezier(.55,0,.1,1);
+}
+
+#currentStudentQueueOpen:hover {
+  background-color: #0E7A72;
+}
+
+.badge1 {
+   position:relative;
+}
+.badge1[data-badge]:after {
+   content:attr(data-badge);
+   position:absolute;
+   top:-10px;
+   right:-10px;
+   font-size:.9em;
+   background:#7A0E16;
+   color:white;
+   width:24px;height:24px;
+   text-align:center;
+   line-height:18px;
+   border-radius:50%;
+   padding-top: 1.5%;
+   box-shadow:0 0 1px #333;
 }

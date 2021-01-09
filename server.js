@@ -175,6 +175,17 @@ io.on('connection', socket => {
 			socket.emit('failedAuth');
 		}
 	});
+	socket.on('newTeacherDisplayName', async (userInfo) => {
+		let logged = await isLoggedIn(userInfo);
+		if (logged) {
+			connection.query("UPDATE teachers SET myname=? WHERE username=?", [userInfo.name, userInfo.username], (err)=> {
+				if (err) console.log("UPDATE teachers error");
+				socket.emit('toTable', {teachname: userInfo.name})
+			});
+		} else {
+			socket.emit('failedAuth');
+		}
+	});
 	socket.on('studentJoin', function(userInfo) {
 		console.log("student joined");
 		//check the room id they are trying to join <-- need to check for both zero and one
@@ -199,10 +210,10 @@ io.on('connection', socket => {
 							//now!
 							let studentBool, teacherEmit;
 							studentAllowance ? (studentBool = 1, teacherEmit = "studentHasJoinedTheRoomQueue") :
-							(studentBool = 0, teacherEmit = "studentHasJoinedTheRoom");
-								io.to(row[0].teacherSocket).emit(teacherEmit, {
-									name: userInfo.name
-								});
+								(studentBool = 0, teacherEmit = "studentHasJoinedTheRoom");
+							io.to(row[0].teacherSocket).emit(teacherEmit, {
+								name: userInfo.name
+							});
 							socket.emit('teacherRoomJoined', {
 								teacherName: socket[0].myname,
 								queueOrJoin: studentBool

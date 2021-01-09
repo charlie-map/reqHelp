@@ -88,18 +88,21 @@ socket.on('incorrectPassword', () => {
 
 socket.on('toTable', (serverInfo) => {
 	//redirect to the home page for specific users (need to send username);
-	window.sessionStorage.setItem('token', serverInfo.token);
-	window.sessionStorage.setItem('username', serverInfo.username);
-	window.sessionStorage.setItem('teachname', serverInfo.teachname);
-	window.sessionStorage.setItem('teachRoomCode', serverInfo.yourRoomCode);
-	//"reload" the page
-	$("#gettingStartedTeach").hide();
+	if (serverInfo.token != null) {
+		window.sessionStorage.setItem('token', serverInfo.token);
+		window.sessionStorage.setItem('username', serverInfo.username);
+		window.sessionStorage.setItem('teachname', serverInfo.teachname);
+		window.sessionStorage.setItem('teachRoomCode', serverInfo.yourRoomCode);
+		//"reload" the page
+		$("#gettingStartedTeach").hide();
+		$("#homePageTeach").show();
+		$(".settingsPage").hide();
+		$("#confirmSettingChanges").hide();
+		$("#teacherClassOptions").hide();
+	} else {
+		window.sessionStorage.setItem('teachname', serverInfo.teachname);
+	}
 	$("#teacherTrueName").text(window.sessionStorage.getItem('teachname'));
-	$("#homePageTeach").show();
-	$(".settingsPage").hide();
-	$("#confirmSettingChanges").hide();
-	$("#teacherClassOptions").hide();
-	socket.emit('goingHome');
 });
 
 $("#settingsPage").click(function() {
@@ -112,10 +115,16 @@ $("#settingsPage").click(function() {
 		//need to hide it, but restore it when we exit
 		window.sessionStorage.setItem('teacherClassOptionsStillThere', true);
 		$("#teacherClassOptions").hide();
-	} else if ($(".settingsPage").is(":hidden") && window.sessionStorage.getItem('teacherClassOptionsStillThere')) {
+	} else if ($(".settingsPage").is(":hidden") && window.sessionStorage.getItem('teacherClassOptionsStillThere') == "true") {
 		//check to see if the window should be opened
 		$("#teacherClassOptions").show();
+	} else if ($(".settingsPage").is(":visible") && $("#teacherClassOptions").is(":hidden")) {
+		//set teach to false and leave it on that
+		window.sessionStorage.setItem('teacherClassOptionsStillThere', false);
+	} else {
+		window.sessionStorage.setItem('teacherClassOptionsStillThere', false);
 	}
+	setTimeout(hideSettingsCheck, 300);
 });
 
 $("#nameChange").keypress(event => {
@@ -123,10 +132,16 @@ $("#nameChange").keypress(event => {
 	$("#confirmSettingChanges").show();
 });
 
+function hideSettingsCheck() {
+	//check to see if the inputs have changed
+	$("#nameChange").val() != "" ? $("#confirmSettingChanges").show() : $("#confirmSettingChanges").hide();
+	$(".settingsPage").is(":visible") ? setTimeout(hideSettingsCheck, 300) : console.log("don't display");
+}
+
 $("#closeSettingsPage").click(function() {
 	$(".settingsPage").hide();
 	$("#teacherStartClass").show();
-	if (window.sessionStorage.getItem('teacherClassOptionsStillThere')) {
+	if (window.sessionStorage.getItem('teacherClassOptionsStillThere') == "true") {
 		$("#teacherClassOptions").show();
 	}
 });
@@ -134,6 +149,14 @@ $("#closeSettingsPage").click(function() {
 $("#confirmSettingChanges").click(function() {
 	$(".settingsPage").toggle();
 	$("#teacherStartClass").toggle();
+	$("#confirmSettingChanges").hide();
+	//send new teacher name to update the database
+	if (window.sessionStorage.getItem('teacherClassOptionsStillThere') == "true") {
+		$("#teacherClassOptions").show();
+	}
+	if ($("#nameChange").val() != "") {
+		socket.emit('newTeacherDisplayName', {name: $("#nameChange").val(), token: window.sessionStorage.getItem('token'), username: window.sessionStorage.getItem('username')});
+	}
 });
 
 $("#teacherStartClass").click(() => {
