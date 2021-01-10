@@ -69,8 +69,10 @@
       <h1 id="teachersClass"></h1>
       <h2 id="teachersRoomID"></h2>
       <!-- all the members -->
-      <div id="currentStudentQueue">
-        <button class="badge1" data-badge="6" id="currentStudentQueueOpen">Current student queue</button>
+      <button class="badge1" data-badge="0" id="currentStudentQueueOpen">Student queue</button>
+      <div class="settingsPage" id="currentStudentQueue">
+        <button id="closeQueuePage">Close</button>
+        <span id="noStudentsCurrently">No students in queue</span>
         <ol id="studentListinQueue">
           <li>
             <!-- name -->
@@ -90,18 +92,28 @@
     </div>
     <div id="gettingStartedStudent">
       <!-- the students name -->
-      <input type="text" id="studentShownName" placeholder="Name" />
-      <input
-        type="text"
-        id="teacherRoomIDJoiner"
-        placeholder="Your teacher's room number"
-      />
-      <button id="goToTeacherRoom">Join room</button>
+      <input type="text" class="form__field" id="studentShownName" name="studentShownName" placeholder="Name"/>
+      <label for="studentShownName" class="form__label"></label>
+      <input type="text" class="form__field" id="teacherRoomIDJoiner" name="teacherRoomIDJoiner" placeholder="Your teacher's room number"/>
+      <label for="teacherRoomIDJoiner" class="form__label"></label>
+      <button class="animeButton" id="goToTeacherRoom"><span class="noselect">Join room</span><div id="circle"></div></button>
     </div>
     <div id="studentInTeachersRoom">
       <h1 id="studentCurrentLocation"></h1>
       <div id="teacherRoomExist">
-        <span id="teacherNameForRoom"></span>
+        <h1 id="teacherNameForRoom"></h1>
+        <div id="joinedRoomQueue">
+          <div class="loader" id="joiningTeachersRoomInABit"></div>
+        </div>
+        <div id="fullyJoined">
+          <button id="requestHelpFromTeach">
+            Help
+          </button>
+        </div>
+      </div>
+      <div id="teacherRoomNotExistent">
+        <h2> The room you've tried to join is either offline or does not exist </h2>
+        <a> Try another room </a>
       </div>
     </div>
   </body>
