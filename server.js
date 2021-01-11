@@ -37,19 +37,23 @@ const isLoggedIn = async function(userInfo) {
 		return new Promise((resolve, reject) => {
 			connection.query("SELECT * FROM tokens WHERE token=?", userInfo.token, (err, row) => {
 				if (err) console.log("token selection error");
-				//if there's a row --> check to see how different current date versus expirey are, then run based on that
-				//subtract row from current time to see the difference
-				let diff = currentTime - row[0].expire;
-				//devide the number by another huge number to get the estimated hours -- above 8, and it's cut off
-				diff = diff / 3600000; //milliseconds in hours
-				if (diff > 8) {
-					resolve(false);
+				if (row.length) {
+					//if there's a row --> check to see how different current date versus expirey are, then run based on that
+					//subtract row from current time to see the difference
+					let diff = currentTime - row[0].expire;
+					//devide the number by another huge number to get the estimated hours -- above 8, and it's cut off
+					diff = diff / 3600000; //milliseconds in hours
+					if (diff > 8) {
+						resolve(false);
+					} else {
+						//reset the expiry date
+						connection.query("UPDATE tokens SET expire=? WHERE token=?", [currentTime, userInfo.token], (err) => {
+							if (err) console.log("updating tokens messed up");
+							resolve(true);
+						});
+					}
 				} else {
-					//reset the expiry date
-					connection.query("UPDATE tokens SET expire=? WHERE token=?", [currentTime, userInfo.token], (err) => {
-						if (err) console.log("updating tokens messed up");
-						resolve(true);
-					});
+					resolve(false);
 				}
 			});
 		});
@@ -146,7 +150,6 @@ io.on('connection', socket => {
 		if (logCheck == "usernameNotExist") {
 			socket.emit(logCheck);
 		} else if (logCheck == "incorrectPassword") {
-
 			socket.emit(logCheck);
 		} else {
 			socket.emit(logCheck[0], {
@@ -196,11 +199,14 @@ io.on('connection', socket => {
 		let logged = await isLoggedIn(userInfo);
 		if (logged) {
 			//delete that student value from the database
+			userInfo.closedOrOpen = userInfo.closedOrOpen ? 1 : 0;
 			connection.query("DELETE FROM " + userInfo.teachRoomCode + userInfo.closedOrOpen + " WHERE studentName=? AND studentID=?", [userInfo.studentName, userInfo.studentID], (err) => {
 				if (err) console.log("deletion from teacher database");
+				//shoot student back to the open screen
+				io.to(userInfo.studentID).emit('studentGotKickedFromRoom', {
+					teacherRoom: userInfo.teacherName
+				});
 			});
-			//shoot student back to the open screen
-			io.to(userInfo.socketID).emit('failedAuth');
 		} else {
 			socket.emit('failedAuth');
 		}
@@ -208,9 +214,11 @@ io.on('connection', socket => {
 	socket.on('studentCanJoinTeacherRoom', async (userInfo) => {
 		let logged = await isLoggedIn(userInfo);
 		if (logged) {
-			console.log(userInfo.teacherName, userInfo.token, userInfo.studentID, userInfo.studentName);
 			//tell the student to "join" the room --> send them to the home screen
-			io.to(userInfo.studentID).emit('trueJoinTeacherRoom', {studentName: userInfo.studentName, teacherName: userInfo.teacherName})
+			io.to(userInfo.studentID).emit('trueJoinTeacherRoom', {
+				studentName: userInfo.studentName,
+				teacherName: userInfo.teacherName
+			})
 		} else {
 			socket.emit('failedAuth');
 		}
@@ -253,6 +261,39 @@ io.on('connection', socket => {
 			});
 		});
 	});
+	socket.on('thisStudentNeedsHelp', (userInfo) => {
+		//check that the room exists
+		connection.query("SHOW TABLES LIKE ?", userInfo.currentRoom + userInfo.closedOrOpen, (err, row) => {
+			if (err) console.log("showing student needs help tables err");
+			if (row.length) {
+				//select the teachers information from database
+				connection.query("SELECT teacherSocket FROM teachers WHERE roomID=?", userInfo.currentRoom, (err, row2) => {
+					if (err) console.log("select from teachers roomID err");
+					io.to(row2[0].teacherSocket).emit('studentNeedsHelpFromTeach', {
+						studentSocket: socket.id,
+					});
+				});
+			} else {
+				socket.emit('teachRoomNoExist');
+			}
+		});
+	});
+	socket.on('studentHasBeenHelped', (userInfo) => {
+		io.to(userInfo.studentID).emit('teacherHasHelpedYou');
+	});
+	socket.on('studentLeavingSite', function(userInfo) {
+		//see if they are currently in a room
+		if (userInfo.currentRoom != null & userInfo.currentRoom != undefined) {
+			//tell the teacher that the student is leaving
+			connection.query("SELECT teacherSocket FROM teachers WHERE roomID=?", userInfo.currentRoom, (err, row) => {
+				if (err) console.log("selecting teacher socket from teachers err");
+				io.to(row[0].teacherSocket).emit('aStudentLeftTheRoom', {
+					studentName: userInfo.studentName,
+					studentSocket: socket.id
+				});
+			});
+		}
+	});
 	socket.on('teacherLeavingSite', async function(userInfo) {
 		//delete them from the database
 		//first check to see if they're a teacher (meaning they have something to delete)
@@ -261,8 +302,14 @@ io.on('connection', socket => {
 			connection.query("DELETE FROM tokens WHERE token=?", userInfo.token, (err) => {
 				if (err) console.log("token deletion error", err);
 				let numAnswer = userInfo.closedOrOpen == "true" ? 1 : 0;
-				connection.query("DROP TABLE " + userInfo.teacherIDCode + numAnswer, (err) => {
-					if (err) console.log("drop table error", err);
+				//make sure table isn't there
+				connection.query("SHOW TABLES LIKE '" + userInfo.teacherIDCode + numAnswer + "'", (err, row) => {
+					if (err) console.log("showing tables error on leaving site", err);
+					if (row.length) {
+						connection.query("DROP TABLE " + userInfo.teacherIDCode + numAnswer, (err) => {
+							if (err) console.log("drop table error", err);
+						});
+					}
 				});
 			});
 		} else {

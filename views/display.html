@@ -14,6 +14,7 @@
     <script src="/index.js" defer></script>
   </head>
   <body>
+    <h1 id="studentGotKicked"></h1>
     <div id="teachOrStudent">
       <button class="animeButton1" id="goTeach"><span class="noselect">Teacher</span><div id="circle"></div></button>
       <button class="animeButton1" id="goStudy"><span class="noselect">Student</span><div id="circle"></div></button>
@@ -102,13 +103,18 @@
       <h1 id="studentCurrentLocation"></h1>
       <div id="teacherRoomExist">
         <h1 id="teacherNameForRoom"></h1>
+        <h1 id="teacherNameForRoom1"></h1>
         <div id="joinedRoomQueue">
           <div class="loader" id="joiningTeachersRoomInABit"></div>
         </div>
         <div id="fullyJoined">
-          <button id="requestHelpFromTeach">
+          <h1 class="teacherGreetings" id="waitingForHelpFromTeach">Waiting for your teacher</h1>
+          <div id="joinedRoomQueue">
+            <div class="loader" id="joiningTeachersRoomInABit1"></div>
+          </div>
+          <button class="animeButton" id="requestHelpFromTeacher"><span class="noselect">
             Help
-          </button>
+          </span><div id="fattestCircle"></div></button>
         </div>
       </div>
       <div id="teacherRoomNotExistent">
