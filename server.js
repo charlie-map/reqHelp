@@ -78,6 +78,35 @@ app.get("/", (req, res) => {
 });
 
 io.on('connection', socket => {
+	socket.emit('authCheckForDis');
+	socket.on('authCheckForDisTrue', async (userInfo)=> {
+		let logged = await isLoggedIn(userInfo.token);
+		if (logged) {
+			connection.query("SELECT * FROM tokens WHERE token=?", userInfo.token, (err, row)=> {
+				if (err) console.log("SELECTIONG from tokens with token during auth");
+				connection.query("SELECT * FROM teachers WHERE usernme=?", row[0].username, (err, row2)=> {
+					if (err) console.log("SELECT teach expire time FROM teachers");
+					if (Date.now() - row2[0].teachExpireTime > 300000) {
+						connection.query("SHOW TABLES LIKE ?", row2[0].roomID, (err, row3) => {
+							if (err) console.log("show tables error");
+							if (row3.length) {
+
+							} else {
+								socket.emit('toTable', {
+									token: userInfo.token,
+									username: row[0].username,
+									teachname: row2[0].myname,
+									yourRoomCode: row2[0].roomID
+								});
+							}
+						});
+					}
+				});
+			});
+		} else {
+			socket.emit('failedAuth');
+		}
+	});
 	socket.on('signUp', function(userInfo) {
 		let username = userInfo.username;
 		//need to add person into the database after encrypting their password
@@ -93,8 +122,8 @@ io.on('connection', socket => {
 						//create token
 						let preToken = uuidv4();
 						sessionStore.setItem('token', preToken);
-						connection.query("INSERT INTO tokens(token, expire) VALUES(?, ?)", [preToken, Date.now()], (err) => {
-							if (err) console.log("token insertion error");
+						connection.query("INSERT INTO tokens(token, expire, username) VALUES(?, ?, ?)", [preToken, Date.now(), username], (err) => {
+							if (err) console.log("token insertion error", err);
 							socket.emit('toTable', {
 								token: preToken,
 								username: username,
@@ -303,10 +332,10 @@ io.on('connection', socket => {
 				if (err) console.log("token deletion error", err);
 				let numAnswer = userInfo.closedOrOpen == "true" ? 1 : 0;
 				//make sure table isn't there
-				connection.query("SHOW TABLES LIKE '" + userInfo.teacherIDCode + numAnswer + "'", (err, row) => {
+				connection.query("SHOW TABLES LIKE ?", userInfo.teacherIDCode + numAnswer, (err, row) => {
 					if (err) console.log("showing tables error on leaving site", err);
 					if (row.length) {
-						connection.query("DROP TABLE " + userInfo.teacherIDCode + numAnswer, (err) => {
+						connection.query("DROP TABLE ?", userInfo.teacherIDCode + numAnswer, (err) => {
 							if (err) console.log("drop table error", err);
 						});
 					}
@@ -315,6 +344,16 @@ io.on('connection', socket => {
 		} else {
 			//doesn't matter lol goodbye
 		}
+	});
+	socket.on('disconnect', function() {
+		connection.qeuery("SELECT username FROM teachers WHERE teacherSocket=?", socket.id, (err, row)=> {
+			if (err) console.log("teacher for disconnect selection error");
+			if (row.length) {
+				connection.query("INSERT INTO teachers (teachExpireTime) VALUES(?) WHERE username=?", [Date.now(), row[0].username], (err)=> {
+					if (err) console.log("INSERTION into teachers expiry time error");
+				});
+			}
+		});
 	});
 });
 

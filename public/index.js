@@ -29,6 +29,14 @@ $("#buttonSignupInstead").click(() => {
 	$("#login").toggle();
 });
 
+socket.on('authCheckForDis', () => {
+	if (!window.sessionStorage.getItem('token')) {
+		socket.emit('authCheckForDisTrue', {
+			token: window.sessionStorage.getItem('item')
+		});
+	}
+});
+
 function signUp() {
 	socket.emit('signUp', {
 		username: $("#usernameS").val(),
