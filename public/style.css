@@ -152,6 +152,13 @@ html {
   width: 80%;
 }
 
+#meetTimeout {
+  position: relative;
+  top: 10%;
+  left: 10%;
+  width: 80%;
+}
+
 #settingsPage {
   background-color: #11998E;
   position: absolute;
@@ -603,4 +610,10 @@ ol li {
 
 #studentGotKicked {
   text-align: center;
+}
+
+#endClass {
+  position: absolute;
+  left: 5%;
+  bottom: 5%;
 }

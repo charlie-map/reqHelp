@@ -13,6 +13,8 @@ CREATE TABLE teachers {
 	teachExpireSocket BIGINT,
 	teacherIdentity CHAR(6),
 	roomOpen TINYINT(1),
+	meetingTimeoutMinutes CHAR(3) DEFAULT 30,
+	meetingTimeoutExpiry BIGINT,
 	PRIMARY KEY(id)
 }
 

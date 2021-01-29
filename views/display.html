@@ -48,6 +48,8 @@
         <button id="closeSettingsPage">Close</button>
         <input type="text" class="form__field" id="nameChange" name="nameChange" placeholder="Change display name"/>
         <label for="nameChange" class="form__label"></label>
+        <input type="text" class="form__field" id="meetTimeout" name="meetTimeout" placeholder="Meeting timeout (minutes)"/>
+        <label for="meetTimeout" class="form__label"></label>
         <button id="confirmSettingChanges">Confirm</button>
       </div><!-- overlay -->
       <div id="teacherHeader">
@@ -57,8 +59,6 @@
       <button class="animeButton1" id="teacherStartClass"><span class="noselect">Start class</span><div id="circle"></div></button>
       <!-- ^^for when this button is pressed, open up extra options -->
       <div id="teacherClassOptions">
-        <input type="text" class="form__field" id="classTimeSetting" name="classTimeSetting" placeholder="Class length"/>
-        <label for="classTimeSetting" class="form__label"></label>
         <label class="container">Private Room
           <input type="checkbox" name="whatHappensToStudent" id="whatHappensToStudent" checked="checked">
           <span class="checkmark"></span>
@@ -84,12 +84,13 @@
       </div>
       <div id="boxofStudentListinClass">
         <ol id="studentListinClass">
-          <li>
+          <li id="tempname">
             <!-- name -->
             <span></span>
           </li>
         </ol>
       </div>
+      <button class="animeButton1" id="endClass"><span class="noselect">End</span><div id="circle"></div></button>
     </div>
     <div id="gettingStartedStudent">
       <!-- the students name -->
