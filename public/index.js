@@ -224,13 +224,15 @@ socket.on('cleanTeacherRoomStart', (serverInfo) => {
 		$(".badge1").removeAttr("data-badge");
 	}
 	$("#teachersRoomID").text("Room code - " + window.sessionStorage.getItem('teachRoomCode'));
+	socket.on('give')
 	setTimeout(afkCheck, 60000);
 });
 
 function afkCheck() {
 	socket.emit('checkForClosingMeeting', {
 		username: window.sessionStorage.getItem('username'),
-		token: window.sessionStorage.getItem('token')
+		token: window.sessionStorage.getItem('token'),
+		roomCode: window.sessionStorage.getItem('teachRoomCode')
 	});
 	setTimeout(afkCheck, 60000);
 }

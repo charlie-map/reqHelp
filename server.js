@@ -78,11 +78,7 @@ const timeoutCheck = async function(socket) {
 					console.log("OKAY INSIDE OF PROMIS", socket, row[0].meetingTimeoutExpiry);
 					//compare them with current date
 					if (Date.now() - row[0].meetingTimeoutExpiry < row[0].meetingTimeoutMinutes) {
-						connection.query("UPDATE teachers SET meetingTimeoutExpiry=? WHERE teacherSocket=?", [Date.now(), socket], (err) => {
-							if (err) console.log("updating teachers error");
-							console.log("WITHIN THE INTTER QUERY");
-							resolve(true);
-						});
+						resolve(true);
 					} else {
 						resolve(false);
 					}
@@ -428,7 +424,7 @@ io.on('connection', socket => {
 							studentSocket: socket.id,
 							studentName: userInfo.studentName
 						});
-						connection.query("UPDATE teachers SET meetingTimeoutExpiry=? WHERE memberSocket=?", [Date.now(), socket.id], (err) => {
+						connection.query("UPDATE teachers SET meetingTimeoutExpiry=? WHERE teacherSocket=?", [Date.now(), row2[0].teacherSocket], (err) => {
 							if (err) console.log("updating teach Expiry error in teachs");
 						});
 					});
@@ -441,7 +437,10 @@ io.on('connection', socket => {
 	socket.on('studentHasBeenHelped', (userInfo) => {
 		connection.query("UPDATE classrooms SET needHelp=0 WHERE memberSocket=?", userInfo.studentID, (err) => {
 			if (err) console.log("classroom errror 350");
-			io.to(userInfo.studentID).emit('teacherHasHelpedYou');
+			connection.query("UPDATE teachers SET meetingTimeoutExpiry=? WHERE teacherSocket=?", [Date.now(), socket.id], (err) => {
+				if (err) console.log("updating teach Expiry error in teachs");
+				io.to(userInfo.studentID).emit('teacherHasHelpedYou');
+			});
 		});
 	});
 	socket.on('closeRoom', async (userInfo) => {
@@ -449,7 +448,7 @@ io.on('connection', socket => {
 		if (logged) {
 			connection.query("DELETE FROM classrooms WHERE roomID=? AND teacherIdentity IS NULL", userInfo.roomCode, (err) => {
 				if (err) console.log("ending class err");
-				socket.emit('classHasEnded');
+				socket.broadcast.to(userInfo.roomCode).emit('classHasEnded');
 			});
 		}
 	});
@@ -461,7 +460,10 @@ io.on('connection', socket => {
 			if (checked) {
 				console.log("no time out");
 			} else {
-				socket.emit('classHasEnded');
+				connection.query("DELETE FROM classrooms WHERE roomID=? AND teacherIdentity IS NULL", userInfo.roomCode, (err) => {
+					if (err) console.log("ending class err");
+					socket.broadcast.to(userInfo.roomCode).emit('classHasEnded');
+				});
 			}
 		} else {
 			socket.emit('failedAuth');
