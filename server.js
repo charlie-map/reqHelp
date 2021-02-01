@@ -142,7 +142,7 @@ io.on('connection', socket => {
 					});
 					connection.query("UPDATE tokens SET token=?, expire=?, userSocket=? WHERE teacherUsername=?", [token, Date.now(), socket.id, userInfo.username], (err) => {
 						if (err) socket.emit('errorHandle');
-						if (Date.now() - row2[0].teachExpireTime < 360000) { // if this is true and at least one person in room, then join the room automatically
+						if (row2[0].meetingTimeoutExpiry - Date.now() < 360000) { // if this is true and at least one person in room, then join the room automatically
 							connection.query("UPDATE teachers SET teacherSocket=?, roomOpen=1 WHERE roomID=? AND teacherIdentity=?", [socket.id, row2[0].roomID, row2[0].teacherIdentity], (err) => {
 								if (err) socket.emit('errorHandle');
 								//either send them to their room or just their table
@@ -189,6 +189,7 @@ io.on('connection', socket => {
 											});
 											//need to run through each student that's not in queue and send a fake in classroom join call to the teacher - done!
 										} else {
+											console.log("here");
 											connection.query("UPDATE teachers SET roomOpen=0 WHERE teacherSocket=?", socket.id, (err) => {
 												if (err) socket.emit('errorHandle');
 												socket.emit('toTable', {
