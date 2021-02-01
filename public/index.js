@@ -115,6 +115,8 @@ socket.on('toTable', (serverInfo) => {
 		window.sessionStorage.setItem('teachname', serverInfo.teachname);
 		window.sessionStorage.setItem('teachRoomCode', serverInfo.yourRoomCode);
 		window.sessionStorage.setItem('teacherTimeout', serverInfo.teacherTimeout);
+		$("#teacherClassLength").text("Inactivity timeout: " + window.sessionStorage.getItem('teacherTimeout') + " minutes");
+		$("#teacherTrueName").text(window.sessionStorage.getItem('teachname'));
 		$("#gettingStartedTeach").hide();
 		$("#homePageTeach").show();
 		$(".settingsPage").hide();
@@ -123,8 +125,6 @@ socket.on('toTable', (serverInfo) => {
 	} else {
 		window.sessionStorage.setItem('teachname', serverInfo.teachname);
 	}
-	$("#teacherClassLength").text("Inactivity timeout: " + window.sessionStorage.getItem('teacherTimeout') + " minutes");
-	$("#teacherTrueName").text(window.sessionStorage.getItem('teachname'));
 });
 
 $("#settingsPage").click(function() {
@@ -175,10 +175,13 @@ $("#confirmSettingChanges").click(function() {
 			token: window.sessionStorage.getItem('token'),
 			username: window.sessionStorage.getItem('username')
 		});
-		$("#nameChage").val("");
+		window.sessionStorage.setItem('teachname', $("#nameChange").val());
+		$("#teacherTrueName").text(window.sessionStorage.getItem('teachname'));
+		$("#nameChange").val("");
 	}
 	if ($("#meetTimeout").val() != "") {
 		let string = $("#meetTimeout").val();
+		$("#meetTimeout").val("");
 		let num = parseInt(string.replace(/\D/g, ''), 10);
 		num = num > 240 ? 240 : num;
 		window.sessionStorage.setItem('teacherTimeout', num);

@@ -133,7 +133,6 @@ io.on('connection', socket => {
 	socket.on('authCheckForDisTrue', async (userInfo) => {
 		let logged = await isLoggedIn(userInfo);
 		if (logged) {
-			console.log(userInfo.username);
 			connection.query("SELECT meetingTimeoutExpiry, roomID, teacherIdentity, myname, meetingTimeoutMinutes FROM teachers WHERE username=?", userInfo.username, (err, row2) => {
 				if (err) socket.emit('errorHandle');
 				if (row2.length) {
@@ -350,9 +349,6 @@ io.on('connection', socket => {
 		if (logged) {
 			connection.query("UPDATE teachers SET myname=? WHERE username=?", [userInfo.name, userInfo.username], (err) => {
 				if (err) socket.emit('errorHandle');
-				socket.emit('toTable', {
-					teachname: userInfo.name
-				})
 			});
 		} else {
 			socket.emit('failedAuth');
