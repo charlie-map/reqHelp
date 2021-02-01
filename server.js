@@ -133,7 +133,7 @@ io.on('connection', socket => {
 	socket.on('authCheckForDisTrue', async (userInfo) => {
 		let logged = await isLoggedIn(userInfo);
 		if (logged) {
-			connection.query("SELECT meetingTimeoutExpiry, roomID, teacherIdentity, myname, meetingTimeoutMinutes FROM teachers WHERE username=?", userInfo.username, (err, row2) => {
+			connection.query("SELECT teachExpireTime, roomID, teacherIdentity, myname, meetingTimeoutMinutes FROM teachers WHERE username=?", userInfo.username, (err, row2) => {
 				if (err) socket.emit('errorHandle');
 				if (row2.length) {
 					let token = uuidv4();
@@ -142,7 +142,7 @@ io.on('connection', socket => {
 					});
 					connection.query("UPDATE tokens SET token=?, expire=?, userSocket=? WHERE teacherUsername=?", [token, Date.now(), socket.id, userInfo.username], (err) => {
 						if (err) socket.emit('errorHandle');
-						if (row2[0].meetingTimeoutExpiry - Date.now() < 360000) { // if this is true and at least one person in room, then join the room automatically
+						if (Date.now() - row2[0].teachExpireTime < 360000) { // if this is true and at least one person in room, then join the room automatically
 							connection.query("UPDATE teachers SET teacherSocket=?, roomOpen=1 WHERE roomID=? AND teacherIdentity=?", [socket.id, row2[0].roomID, row2[0].teacherIdentity], (err) => {
 								if (err) socket.emit('errorHandle');
 								//either send them to their room or just their table

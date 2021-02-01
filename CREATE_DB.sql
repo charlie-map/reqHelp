@@ -10,7 +10,7 @@ CREATE TABLE teachers (
 	roomID CHAR(6),
 	myname VARCHAR(255),
 	teacherSocket CHAR(20),
-	teachExpireSocket BIGINT,
+	teachExpireTime BIGINT,
 	teacherIdentity CHAR(6),
 	roomOpen TINYINT(1),
 	meetingTimeoutMinutes CHAR(3) DEFAULT 30,
