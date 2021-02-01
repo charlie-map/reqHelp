@@ -1,5 +1,4 @@
 const socket = io.connect("/");
-let studentsInQueue = new Map();
 
 function hideAll() {
 	$("#homePageTeach").hide();
@@ -231,13 +230,12 @@ socket.on('cleanTeacherRoomStart', (serverInfo) => {
 });
 
 socket.on('studentHasJoinedTheRoomQueue', (serverInfo) => {
-	studentsInQueue[serverInfo.studentSocket] = serverInfo.name;
 	$(".badge1").attr("data-badge", serverInfo.queueLength);
 	window.sessionStorage.setItem('queueLength', serverInfo.queueLength);
 	$("#noStudentsCurrently").hide();
 	$("#studentListinQueue").append(
-		"<li class='" + serverInfo.studentSocket + "' id='" + serverInfo.name + "'> <span  id='" + serverInfo.studentSocket + "'>" + serverInfo.name + "</span> " +
-		"<br> <button class='accepting' id='" + serverInfo.studentSocket + "'> Allow </button> <button class='denying' id='" + serverInfo.studentSocket + "'> Deny </button> </li>"
+		"<li class='" + serverInfo.name + "' id='" + serverInfo.studentSocket + "position'> <span  id='" + serverInfo.studentSocket + "'>" + serverInfo.name + "</span> " +
+		"<br> <button class='accepting' id='" + serverInfo.studentSocket + "accept'> Allow </button> <button class='denying' id='" + serverInfo.studentSocket + "deny'> Deny </button> </li>"
 	);
 });
 
@@ -251,9 +249,8 @@ $("#closeQueuePage").click(() => {
 });
 
 $(document).on('click', '.accepting', function() {
-	let studentID = $(this).attr("id");
-	let studentName = studentsInQueue[studentID];
-	delete studentsInQueue[studentID];
+	let studentID = $(this).attr("id").substring(0, 20) + "position";
+	let studentName = $("#" + studentID).attr("class");
 	window.sessionStorage.setItem('queueLength', parseInt(window.sessionStorage.getItem('queueLength'), 10) - 1);
 	if (parseInt(window.sessionStorage.getItem('queueLength'), 10) == 0 || isNaN(parseInt(window.sessionStorage.getItem('queueLength'), 10))) {
 		$(".badge1").removeAttr("data-badge");
@@ -261,12 +258,13 @@ $(document).on('click', '.accepting', function() {
 	} else {
 		$(".badge1").attr("data-badge", window.sessionStorage.getItem('queueLength'));
 	}
-	$("#" + studentName).remove();
+	$("#" + studentID).remove();
+	studentID = studentID.substring(0, 20);
 	$("#studentListinClass").append(
-		"<li class='allStudentsinRoom' id='" + studentID + "'> <span id='" + studentName + "'>" + studentName +
-		"</span> <button class='kickStudentFromClass' id='" + studentID + "'> Kick student </button> <button class='helpedStudent' id='" + studentID + "'> Helped </button></li>"
+		"<li class='allStudentsinRoom' id='" + studentID + "inclass'> <span id='" + studentName + "'>" + studentName +
+		"</span> <button class='kickStudentFromClass' id='" + studentID + "kick'> Kick student </button> <button class='helpedStudent' id='" + studentID + "help'> Helped </button></li>"
 	);
-	$("#" + studentID + " .helpedStudent").hide();
+	$("#" + studentID + "help").hide();
 	socket.emit('studentCanJoinTeacherRoom', {
 		studentName: studentName,
 		studentID: studentID,
@@ -277,10 +275,10 @@ $(document).on('click', '.accepting', function() {
 });
 
 $(document).on('click', '.kickStudentFromClass', function() {
-	let studentID = $(this).attr("id");
-	let studentName = studentsInQueue[studentID];
-	delete studentsInQueue[studentID];
+	let studentID = $(this).attr("id").substring(0, 20) + "inclass";
+	let studentName = $(studentID + " span").val();
 	$("#" + studentID).remove();
+	studentID = studentID.substring(0, 20);
 	socket.emit('studentKickedFromRoom', {
 		studentName: studentName,
 		studentID: studentID,
@@ -294,19 +292,19 @@ $(document).on('click', '.kickStudentFromClass', function() {
 
 socket.on('removeThisStudent', (serverInfo) => {
 	if (serverInfo.inQueue) {
-		$("#" + serverInfo.studentName + " ." + serverInfo.studentID).remove();
+		$("#" + serverInfo.studentID + "position").remove();
 	} else {
-		$("#" + serverInfo.studentID).remove();
+		$("#" + serverInfo.studentID + "inclass").remove();
 	}
 });
 
 $(document).on('click', '.denying', function() {
-	let studentID = $(this).attr("id");
-	let studentName = studentsInQueue[studentID];
-	studentsInQueue.delete(studentID);
+	let studentID = $(this).attr("id").substring(0, 20) + "position";
+	let studentName = $("#" + studentID + " span").val();
+	$("#" + studentID).remove();
+	studentID = studentID.substring(0, 20);
 	window.sessionStorage.setItem('queueLength', parseInt(window.sessionStorage.getItem('queueLength'), 10) - 1);
 	parseInt(window.sessionStorage.getItem('queueLength'), 10) == 0 ? ($(".badge1").removeAttr("data-badge"), $("#noStudentsCurrently").show()) : $(".badge1").attr("data-badge", window.sessionStorage.getItem('queueLength'));
-	$("#" + studentName).remove();
 	socket.emit('studentKickedFromRoom', {
 		studentName: studentName,
 		studentID: studentID,
@@ -320,17 +318,16 @@ $(document).on('click', '.denying', function() {
 
 socket.on('studentHasJoinedTheRoom', (serverInfo) => {
 	$("#studentListinClass").append(
-		"<li class='allStudentsinRoom' id='" + serverInfo.studentSocket + "'> <span id='" + serverInfo.name + "'>" + serverInfo.name +
-		"</span> <button class='kickStudentFromClass' id='" + serverInfo.studentSocket + "'> Kick student </button>" +
-		"<button class='helpedStudent' id='" + serverInfo.studentSocket + "'> Helped </button> </li>"
+		"<li class='allStudentsinRoom' id='" + serverInfo.studentSocket + "inclass'> <span id='" + serverInfo.name + "'>" + serverInfo.name +
+		"</span> <button class='kickStudentFromClass' id='" + serverInfo.studentSocket + "kick'> Kick student </button>" +
+		"<button class='helpedStudent' id='" + serverInfo.studentSocket + "help'> Helped </button> </li>"
 	);
-	$("#" + serverInfo.studentSocket + " .helpedStudent").hide();
+	$("#" + serverInfo.studentSocket + "help").hide();
 });
 
 socket.on('studentNeedsHelpFromTeach', (serverInfo) => {
-	$("#" + serverInfo.studentSocket).remove();
+	$("#" + serverInfo.studentSocket + "inclass").remove();
 	let students = $("#studentListinClass li");
-	console.log(students);
 	if (students.length > 1) {
 		let indexReplace = 0,
 			run = true;
@@ -345,22 +342,22 @@ socket.on('studentNeedsHelpFromTeach', (serverInfo) => {
 		});
 		students.each(function(index, li) {
 			if (index == indexReplace) {
-				$("#" + $(this).attr("id")).after("<li class='allStudentsinRoom' id='" + serverInfo.studentSocket + "'> <span id='" + serverInfo.studentName +
+				$("#" + $(this).attr("id")).after("<li class='allStudentsinRoom' id='" + serverInfo.studentSocket + "inclass'> <span id='" + serverInfo.studentName +
 					"'>" + serverInfo.studentName + "</span> <button class='kickStudentFromClass' id='" + serverInfo.studentSocket +
-					"'> Kick student </button>" + "<button class='helpedStudent' id='" + serverInfo.studentSocket + "'> Helped </button> </li>");
+					"kick'> Kick student </button>" + "<button class='helpedStudent' id='" + serverInfo.studentSocket + "help'> Helped </button> </li>");
 			}
 		});
 	} else {
-		$("#studentListinClass").append("<li class='allStudentsinRoom' id='" + serverInfo.studentSocket + "'> <span id='" + serverInfo.studentName +
+		$("#studentListinClass").append("<li class='allStudentsinRoom' id='" + serverInfo.studentSocket + "inclass'> <span id='" + serverInfo.studentName +
 			"'>" + serverInfo.studentName + "</span> <button class='kickStudentFromClass' id='" + serverInfo.studentSocket +
-			"'> Kick student </button>" + "<button class='helpedStudent' id='" + serverInfo.studentSocket + "'> Helped </button> </li>");
+			"kick'> Kick student </button>" + "<button class='helpedStudent' id='" + serverInfo.studentSocket + "help'> Helped </button> </li>");
 	}
 	$("#" + serverInfo.studentSocket + " .helpedStudent").show();
 });
 
 $(document).on('click', '.helpedStudent', function() {
 	$(this).hide();
-	let studentID = $(this).attr("id");
+	let studentID = $(this).attr("id").substring(0, 20);
 	let student = $("#" + studentID).remove();
 	$("#studentListinClass").append(student);
 	socket.emit('studentHasBeenHelped', {
@@ -397,8 +394,8 @@ socket.on('classHasEnded', () => {
 });
 
 socket.on('aStudentLeftTheRoom', (serverInfo) => {
-	$("#" + serverInfo.studentName + " ." + serverInfo.studentSocket).remove();
-	$("#" + serverInfo.studentSocket + " .allStudentsinRoom").remove();
+	$("#" + serverInfo.studentSocket + "position").remove();
+	$("#" + serverInfo.studentSocket + "inclass .allStudentsinRoom").remove();
 });
 
 function goingToTeacherRoom() {
