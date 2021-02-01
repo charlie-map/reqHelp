@@ -13,6 +13,12 @@ html {
   background-image: linear-gradient(315deg, #2d3436 0%, #000000 74%);
 }
 
+#teacherClassLength {
+  position: absolute;
+  right: 5%;
+  top: 5%;
+}
+
 /* Customize the label (the container) */
 .container {
   display: block;
@@ -184,6 +190,7 @@ html {
   right: 25.5%;
   width: 50%;
   height: 80%;
+  z-index: 2;
   background-image: linear-gradient(135deg, #2d3436 0%, #11998E 40%);
 }
 

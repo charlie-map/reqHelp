@@ -23,7 +23,8 @@ CREATE TABLE tokens {
 	token CHAR(36) NOT NULL,
 	expire BIGINT,
 	userSocket CHAR(20),
-	teacherUsername VARCHAR(255)
+	teacherUsername VARCHAR(255),
+	PRIMARY KEY(id)
 }
 
 CREATE TABLE classrooms {

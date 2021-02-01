@@ -3,6 +3,7 @@ let studentsInQueue = new Map();
 
 function hideAll() {
 	$("#homePageTeach").hide();
+	$("#errorPage").hide();
 	$("#gettingStartedTeach").hide();
 	$("#gettingStartedStudent").hide();
 	$("#startedClassTeach").hide();
@@ -106,14 +107,14 @@ socket.on('fixInformation', (serverInfo) => {
 });
 
 socket.on('toTable', (serverInfo) => {
-	//redirect to the home page for specific users (need to send username);
+	hideAll();
 	$("#teachOrStudent").hide();
 	if (serverInfo.token != null) {
 		window.sessionStorage.setItem('token', serverInfo.token);
 		window.sessionStorage.setItem('username', serverInfo.username);
 		window.sessionStorage.setItem('teachname', serverInfo.teachname);
 		window.sessionStorage.setItem('teachRoomCode', serverInfo.yourRoomCode);
-		//"reload" the page
+		window.sessionStorage.setItem('teacherTimeout', serverInfo.teacherTimeout);
 		$("#gettingStartedTeach").hide();
 		$("#homePageTeach").show();
 		$(".settingsPage").hide();
@@ -122,21 +123,17 @@ socket.on('toTable', (serverInfo) => {
 	} else {
 		window.sessionStorage.setItem('teachname', serverInfo.teachname);
 	}
+	$("#teacherClassLength").text("Inactivity timeout: " + window.sessionStorage.getItem('teacherTimeout') + " minutes");
 	$("#teacherTrueName").text(window.sessionStorage.getItem('teachname'));
 });
 
 $("#settingsPage").click(function() {
 	$(".settingsPage").toggle();
 	$("#teacherStartClass").toggle();
-	//if options are visible and you're pulling open settings, close
-	//if options are not visible and you're pulling, nothing
-	//need to save current options value when closing if it was open
 	if ($(".settingsPage").is(":visible") && $("#teacherClassOptions").is(":visible")) {
-		//need to hide it, but restore it when we exit
 		window.sessionStorage.setItem('teacherClassOptionsStillThere', true);
 		$("#teacherClassOptions").hide();
 	} else if (!$(".settingsPage").is(":visible") && window.sessionStorage.getItem('teacherClassOptionsStillThere') == "true") {
-		//check to see if the window should be opened
 		$("#teacherClassOptions").show();
 	} else {
 		window.sessionStorage.setItem('teacherClassOptionsStillThere', false);
@@ -145,7 +142,6 @@ $("#settingsPage").click(function() {
 });
 
 $("#nameChange").keypress(event => {
-	//if any event, enable to confirm button at the bottom of the page
 	$("#confirmSettingChanges").show();
 });
 
@@ -154,7 +150,6 @@ $("#meetTimeout").keypress(event => {
 });
 
 function hideSettingsCheck() {
-	//check to see if the inputs have changed
 	($("#nameChange").val() != "" || $("#meetTimeout").val() != "") ? $("#confirmSettingChanges").show(): $("#confirmSettingChanges").hide();
 	if ($(".settingsPage").is(":visible")) setTimeout(hideSettingsCheck, 300);
 }
@@ -171,7 +166,6 @@ $("#confirmSettingChanges").click(function() {
 	$(".settingsPage").toggle();
 	$("#teacherStartClass").toggle();
 	$("#confirmSettingChanges").hide();
-	//send new teacher name to update the database
 	if (window.sessionStorage.getItem('teacherClassOptionsStillThere') == "true") {
 		$("#teacherClassOptions").show();
 	}
@@ -184,11 +178,11 @@ $("#confirmSettingChanges").click(function() {
 		$("#nameChage").val("");
 	}
 	if ($("#meetTimeout").val() != "") {
-		//need to make sure it's only a number
 		let string = $("#meetTimeout").val();
-		let num = parseFloat(string.match(/[0-9]*\.?[0-9]+/), 10);
+		let num = parseInt(string.replace(/\D/g, ''), 10);
 		num = num > 240 ? 240 : num;
-		//this is how long the user's meeting will last for
+		window.sessionStorage.setItem('teacherTimeout', num);
+		$("#teacherClassLength").text("Inactivity timeout: " + num + " minutes");
 		socket.emit('newTeacherTimeoutValue', {
 			value: num,
 			token: window.sessionStorage.getItem('token'),
@@ -214,6 +208,13 @@ $("#startClass").click(() => {
 });
 
 socket.on('cleanTeacherRoomStart', (serverInfo) => {
+	let students = $("#studentListinClass li");
+	if (students.length > 1) {
+		students.each(function(index, li) {
+			let item = $(this).attr("id");
+			if (item != "tempname" && index != 0) $("#" + item).remove();
+		});
+	}
 	$("#startedClassTeach").show();
 	$("#currentStudentQueue").hide();
 	window.sessionStorage.getItem('closedOrOpenRoom') == "true" ? $("#currentStudentQueueOpen").show() : $("#currentStudentQueueOpen").hide();
@@ -224,21 +225,9 @@ socket.on('cleanTeacherRoomStart', (serverInfo) => {
 		$(".badge1").removeAttr("data-badge");
 	}
 	$("#teachersRoomID").text("Room code - " + window.sessionStorage.getItem('teachRoomCode'));
-	socket.on('give')
-	setTimeout(afkCheck, 60000);
 });
 
-function afkCheck() {
-	socket.emit('checkForClosingMeeting', {
-		username: window.sessionStorage.getItem('username'),
-		token: window.sessionStorage.getItem('token'),
-		roomCode: window.sessionStorage.getItem('teachRoomCode')
-	});
-	setTimeout(afkCheck, 60000);
-}
-
 socket.on('studentHasJoinedTheRoomQueue', (serverInfo) => {
-	//make notification bar show
 	studentsInQueue[serverInfo.studentSocket] = serverInfo.name;
 	$(".badge1").attr("data-badge", serverInfo.queueLength);
 	window.sessionStorage.setItem('queueLength', serverInfo.queueLength);
@@ -250,7 +239,6 @@ socket.on('studentHasJoinedTheRoomQueue', (serverInfo) => {
 });
 
 $("#currentStudentQueueOpen").click(() => {
-	//open up the queue div
 	parseInt(window.sessionStorage.getItem('queueLength'), 10) > 0 ? $("#noStudentsCurrently").hide() : $("#noStudentsCurrently").show();
 	$("#currentStudentQueue").toggle();
 });
@@ -261,7 +249,6 @@ $("#closeQueuePage").click(() => {
 
 $(document).on('click', '.accepting', function() {
 	let studentID = $(this).attr("id");
-	//remove them from the queue
 	let studentName = studentsInQueue[studentID];
 	delete studentsInQueue[studentID];
 	window.sessionStorage.setItem('queueLength', parseInt(window.sessionStorage.getItem('queueLength'), 10) - 1);
@@ -272,13 +259,11 @@ $(document).on('click', '.accepting', function() {
 		$(".badge1").attr("data-badge", window.sessionStorage.getItem('queueLength'));
 	}
 	$("#" + studentName).remove();
-	//add them into the normal room
 	$("#studentListinClass").append(
 		"<li class='allStudentsinRoom' id='" + studentID + "'> <span id='" + studentName + "'>" + studentName +
 		"</span> <button class='kickStudentFromClass' id='" + studentID + "'> Kick student </button> <button class='helpedStudent' id='" + studentID + "'> Helped </button></li>"
 	);
 	$("#" + studentID + " .helpedStudent").hide();
-	//then message that socket, notifying that it has joined the room
 	socket.emit('studentCanJoinTeacherRoom', {
 		studentName: studentName,
 		studentID: studentID,
@@ -305,9 +290,9 @@ $(document).on('click', '.kickStudentFromClass', function() {
 });
 
 socket.on('removeThisStudent', (serverInfo) => {
-	if (serverInfo.inQueue) { //they were in queue, remove them
+	if (serverInfo.inQueue) {
 		$("#" + serverInfo.studentName + " ." + serverInfo.studentID).remove();
-	} else { //not in queue, remove them
+	} else {
 		$("#" + serverInfo.studentID).remove();
 	}
 });
@@ -342,13 +327,13 @@ socket.on('studentHasJoinedTheRoom', (serverInfo) => {
 socket.on('studentNeedsHelpFromTeach', (serverInfo) => {
 	$("#" + serverInfo.studentSocket).remove();
 	let students = $("#studentListinClass li");
+	console.log(students);
 	if (students.length > 1) {
 		let indexReplace = 0,
 			run = true;
 		students.each(function(index, li) {
 			let item = $(this).attr("id");
-			if ($("#" + item + " .helpedStudent").is(":hidden") && run) { //for when no one needs help currently: put the user at the top of the list
-				//when this first hits, we then know where we need to place our frend
+			if ($("#" + item + " .helpedStudent").is(":hidden") && run) {
 				indexReplace = index - 1;
 				run = !run;
 			} else {
@@ -357,14 +342,13 @@ socket.on('studentNeedsHelpFromTeach', (serverInfo) => {
 		});
 		students.each(function(index, li) {
 			if (index == indexReplace) {
-				//then place the value after that
 				$("#" + $(this).attr("id")).after("<li class='allStudentsinRoom' id='" + serverInfo.studentSocket + "'> <span id='" + serverInfo.studentName +
 					"'>" + serverInfo.studentName + "</span> <button class='kickStudentFromClass' id='" + serverInfo.studentSocket +
 					"'> Kick student </button>" + "<button class='helpedStudent' id='" + serverInfo.studentSocket + "'> Helped </button> </li>");
 			}
 		});
-	} else { //place them automatically at the top
-		$("#studentListinClass").after("<li class='allStudentsinRoom' id='" + serverInfo.studentSocket + "'> <span id='" + serverInfo.studentName +
+	} else {
+		$("#studentListinClass").append("<li class='allStudentsinRoom' id='" + serverInfo.studentSocket + "'> <span id='" + serverInfo.studentName +
 			"'>" + serverInfo.studentName + "</span> <button class='kickStudentFromClass' id='" + serverInfo.studentSocket +
 			"'> Kick student </button>" + "<button class='helpedStudent' id='" + serverInfo.studentSocket + "'> Helped </button> </li>");
 	}
@@ -372,19 +356,23 @@ socket.on('studentNeedsHelpFromTeach', (serverInfo) => {
 });
 
 $(document).on('click', '.helpedStudent', function() {
-	//need to move the student
 	$(this).hide();
 	let studentID = $(this).attr("id");
 	let student = $("#" + studentID).remove();
-	let students = $("#studentListinClass li");
 	$("#studentListinClass").append(student);
-	//tell the student screen it's been helped
 	socket.emit('studentHasBeenHelped', {
 		studentID: studentID
 	});
 });
 
 $("#endClass").click(() => {
+	let students = $("#studentListinClass li");
+	if (students.length) {
+		students.each(function(index, li) {
+			let item = $(this).attr("id");
+			$("#" + item).remove();
+		});
+	}
 	socket.emit('closeRoom', {
 		roomCode: window.sessionStorage.getItem('teachRoomCode'),
 		username: window.sessionStorage.getItem('username'),
@@ -393,19 +381,25 @@ $("#endClass").click(() => {
 });
 
 socket.on('classHasEnded', () => {
+	if (window.sessionStorage.getItem('token')) {
+		let students = $("#studentListinClass li");
+		if (students.length) {
+			students.each(function(index, li) {
+				let item = $(this).attr("id");
+				$("#" + item).remove();
+			});
+		}
+	}
 	location.reload();
 });
 
 socket.on('aStudentLeftTheRoom', (serverInfo) => {
-	//delete any information regarding them
 	$("#" + serverInfo.studentName + " ." + serverInfo.studentSocket).remove();
-	$("#" + serverInfo.studentSocket + " .allStudentsInRoom").remove();
+	$("#" + serverInfo.studentSocket + " .allStudentsinRoom").remove();
 });
 
 function goingToTeacherRoom() {
 	$("#studentInTeachersRoom").show();
-	//need to send the student name and teacher room the server;
-	//first check if the room is online then need to see if it's closed or not
 	window.sessionStorage.setItem('studentTeacherName', $("#teacherRoomIDJoiner").val());
 	window.sessionStorage.setItem('studentName', $("#studentShownName").val());
 	socket.emit('studentJoin', {
@@ -437,8 +431,6 @@ socket.on('teacherRoomJoined', (serverInfo) => {
 	$("#gettingStartedStudent").hide();
 	$("#teacherRoomExist").show();
 	$("#teacherRoomNotExistent").hide();
-	//check if they're joining queue or going into the room
-	//if 1 --> go into queue, otherwise jooin room
 	window.sessionStorage.setItem('inOrOutOfRoom', serverInfo.queueOrJoin);
 	if (serverInfo.queueOrJoin == "1") {
 		$("#teacherNameForRoom1").text(serverInfo.teacherName + "'s queue");
@@ -464,18 +456,14 @@ socket.on('trueJoinTeacherRoom', (serverInfo) => {
 });
 
 $("#requestHelpFromTeacher").click(() => {
-	//hide help button and wait for teacher
 	$("#requestHelpFromTeacher").hide();
 	$("#waitingForHelpFromTeach").show();
 	$("#joiningTeachersRoomInABit1").show();
-	//update the teacher that this student needs help
-	//Needs: student name - socket and teacher socket (which server has)
 	socket.emit('thisStudentNeedsHelp', {
 		studentName: window.sessionStorage.getItem('studentName'),
 		currentRoom: window.sessionStorage.getItem('studentTeacherName')
 	});
 	socket.on('teacherHasHelpedYou', () => {
-		//reset all the settings
 		$("#requestHelpFromTeacher").show();
 		$("#waitingForHelpFromTeach").hide();
 		$("#joiningTeachersRoomInABit1").hide();
@@ -485,4 +473,15 @@ $("#requestHelpFromTeacher").click(() => {
 socket.on('studentGotKickedFromRoom', (serverInfo) => {
 	hideAll();
 	$("#studentGotKicked").text("You were not allowed into " + serverInfo.teacherRoom + "'s room");
+});
+
+function done() {
+	location.reload();
+}
+
+socket.on('errorHandle', (serverInfo) => {
+	hideAll();
+	$("#errorPage").show();
+	$("#errorPage span").text("We'll redirect in a second");
+	setTimeout(done, 5000);
 });
