@@ -133,7 +133,8 @@ io.on('connection', socket => {
 	socket.on('authCheckForDisTrue', async (userInfo) => {
 		let logged = await isLoggedIn(userInfo);
 		if (logged) {
-			connection.query("SELECT teachExpireTime, roomID, teacherIdentity, myname, meetingTimeoutMinutes FROM teachers WHERE username=?", userInfo.username, (err, row2) => {
+			console.log(userInfo.username);
+			connection.query("SELECT meetingTimeoutExpiry, roomID, teacherIdentity, myname, meetingTimeoutMinutes FROM teachers WHERE username=?", userInfo.username, (err, row2) => {
 				if (err) socket.emit('errorHandle');
 				if (row2.length) {
 					let token = uuidv4();
@@ -228,8 +229,9 @@ io.on('connection', socket => {
 						teacherFier = uuidv4().substring(0, 6);
 					connection.query("INSERT INTO teachers (username, password, roomID, myname, teacherSocket, teacherIdentity) VALUES (?, ?, ?, ?, ?, ?)", [username, hash, teacherID, "teacher", socket.id, teacherFier], (err) => {
 						if (err) socket.emit('errorHandle');
-						connection.query("INSERT INTO classrooms (memberName, roomID, memberSocket, queueing, needHelp, teacherIdentity) VALUES (?, ?, ?, 0, 0, ?)", ["teacher", teacherID, socket.id, teacherFier], (err) => {
-							if (err) socket.emit('errorHandle');
+						connection.query("INSERT INTO classrooms (memberName, roomID, memberSocket, queueing, needHelp, teacherIdentity) VALUES (?, ?, ?, 0, 0, ?)", 
+							["teacher", teacherID, socket.id, teacherFier], (err) => {
+							if (err) console.log("classrooms error", err);
 							//create token
 							let preToken = uuidv4();
 							connection.query("INSERT INTO tokens(token, expire, userSocket, teacherUsername) VALUES(?, ?, ?, ?)", [preToken, Date.now(), socket.id, username], (err) => {
