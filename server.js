@@ -189,7 +189,6 @@ io.on('connection', socket => {
 											});
 											//need to run through each student that's not in queue and send a fake in classroom join call to the teacher - done!
 										} else {
-											console.log("here");
 											connection.query("UPDATE teachers SET roomOpen=0 WHERE teacherSocket=?", socket.id, (err) => {
 												if (err) socket.emit('errorHandle');
 												socket.emit('toTable', {
@@ -220,37 +219,42 @@ io.on('connection', socket => {
 		let username = userInfo.username;
 		//need to add person into the database after encrypting their password
 		//make sure username doesn't exist
-		connection.query("SELECT * FROM teachers WHERE username=?", username, async (err, row) => {
-			if (err) socket.emit('errorHandle');
-			if (!row.length && username != "teachers" && username != "tokens" && username != "classrooms") {
-				let hashValue = await (bcrypt.hash(userInfo.password, saltRounds, function(err, hash) {
-					//put into teachers table
-					let teacherID = uuidv4().substring(0, 6),
-						teacherFier = uuidv4().substring(0, 6);
-					connection.query("INSERT INTO teachers (username, password, roomID, myname, teacherSocket, teacherIdentity) VALUES (?, ?, ?, ?, ?, ?)", [username, hash, teacherID, "teacher", socket.id, teacherFier], (err) => {
-						if (err) socket.emit('errorHandle');
-						connection.query("INSERT INTO classrooms (memberName, roomID, memberSocket, queueing, needHelp, teacherIdentity) VALUES (?, ?, ?, 0, 0, ?)", 
-							["teacher", teacherID, socket.id, teacherFier], (err) => {
-							if (err) console.log("classrooms error", err);
-							//create token
-							let preToken = uuidv4();
-							connection.query("INSERT INTO tokens(token, expire, userSocket, teacherUsername) VALUES(?, ?, ?, ?)", [preToken, Date.now(), socket.id, username], (err) => {
+		username = username.replace("<", "");
+		username = username.replace(">", "");
+		if (username.length < 256) {
+			connection.query("SELECT * FROM teachers WHERE username=?", username, async (err, row) => {
+				if (err) socket.emit('errorHandle');
+				if (!row.length && username != "teachers" && username != "tokens" && username != "classrooms") {
+					let hashValue = await (bcrypt.hash(userInfo.password, saltRounds, function(err, hash) {
+						//put into teachers table
+						let teacherID = uuidv4().substring(0, 6),
+							teacherFier = uuidv4().substring(0, 6);
+						connection.query("INSERT INTO teachers (username, password, roomID, myname, teacherSocket, teacherIdentity) VALUES (?, ?, ?, ?, ?, ?)", [username, hash, teacherID, "teacher", socket.id, teacherFier], (err) => {
+							if (err) socket.emit('errorHandle');
+							connection.query("INSERT INTO classrooms (memberName, roomID, memberSocket, queueing, needHelp, teacherIdentity) VALUES (?, ?, ?, 0, 0, ?)", ["teacher", teacherID, socket.id, teacherFier], (err) => {
 								if (err) socket.emit('errorHandle');
-								socket.emit('toTable', {
-									token: preToken,
-									username: username,
-									teachname: "teacher",
-									yourRoomCode: teacherID,
-									teacherTimeout: 30
+								//create token
+								let preToken = uuidv4();
+								connection.query("INSERT INTO tokens(token, expire, userSocket, teacherUsername) VALUES(?, ?, ?, ?)", [preToken, Date.now(), socket.id, username], (err) => {
+									if (err) socket.emit('errorHandle');
+									socket.emit('toTable', {
+										token: preToken,
+										username: username,
+										teachname: "teacher",
+										yourRoomCode: teacherID,
+										teacherTimeout: 30
+									});
 								});
 							});
 						});
-					});
-				}));
-			} else {
-				socket.emit('usernameTaken');
-			}
-		});
+					}));
+				} else {
+					socket.emit('usernameTaken');
+				}
+			});
+		} else {
+			socket.emit('usernameTaken');
+		}
 	});
 	socket.on('login', async (userInfo) => {
 		let username = userInfo.username;
@@ -309,7 +313,7 @@ io.on('connection', socket => {
 				});
 			}
 		} catch (ERROR) {
-			console.log("awaiitng issue", ERROR);
+			socket.emit('errorHandle');
 		}
 	});
 	socket.on('teacherStartingClass', async function(userInfo) {
@@ -348,9 +352,15 @@ io.on('connection', socket => {
 	socket.on('newTeacherDisplayName', async (userInfo) => {
 		let logged = await isLoggedIn(userInfo);
 		if (logged) {
-			connection.query("UPDATE teachers SET myname=? WHERE username=?", [userInfo.name, userInfo.username], (err) => {
-				if (err) socket.emit('errorHandle');
-			});
+			userInfo.name = userInfo.name.replace("<", "");
+			userInfo.name = userInfo.name.replace(">", "");
+			if (userInfo.name.length < 256) {
+				connection.query("UPDATE teachers SET myname=? WHERE username=?", [userInfo.name, userInfo.username], (err) => {
+					if (err) socket.emit('errorHandle');
+				});
+			} else {
+				socket.emit('classHasEnded');
+			}
 		} else {
 			socket.emit('failedAuth');
 		}
@@ -415,36 +425,43 @@ io.on('connection', socket => {
 				connection.query("SELECT queueing FROM classrooms WHERE roomID=? AND memberSocket=?", [userInfo.teachID, checkingRow[0].teacherSocket], (err, closedRoom) => {
 					if (err) socket.emit('errorHandle');
 					//closed room <-- either 0 (open) or 1 (closed)
-					connection.query("INSERT INTO classrooms (memberName, needHelp, queueing, memberSocket, roomID) VALUES(?, ?, ?, ?, ?)", [userInfo.name, 0, closedRoom[0].queueing, socket.id, userInfo.teachID], (err, row) => {
-						if (err) socket.emit('errorHandle');
-						socket.join(userInfo.teachID);
-						//notify the main socket only
-						connection.query("SELECT teacherSocket, myname FROM teachers WHERE roomID=?", userInfo.teachID, (err, row) => {
+					//clean the user's name before they join
+					let name = userInfo.name.replace("<", "");
+					name = name.replace(">", "");
+					if (name.length < 256) {
+						connection.query("INSERT INTO classrooms (memberName, needHelp, queueing, memberSocket, roomID) VALUES(?, ?, ?, ?, ?)", [name, 0, closedRoom[0].queueing, socket.id, userInfo.teachID], (err, row) => {
 							if (err) socket.emit('errorHandle');
-							//based on locked room will decide if the person joins or is put in queue
-							//now!
-							connection.query("SELECT COUNT(*) AS number FROM classrooms WHERE roomID=? AND queueing=1", userInfo.teachID, (err, queuedRows) => {
+							socket.join(userInfo.teachID);
+							//notify the main socket only
+							connection.query("SELECT teacherSocket, myname FROM teachers WHERE roomID=?", userInfo.teachID, (err, row) => {
 								if (err) socket.emit('errorHandle');
-								let studentBool, teacherEmit;
-								if (closedRoom[0].queueing == 1) {
-									studentBool = 1;
-									teacherEmit = "studentHasJoinedTheRoomQueue";
-								} else {
-									studentBool = 0;
-									teacherEmit = "studentHasJoinedTheRoom";
-								}
-								io.to(row[0].teacherSocket).emit(teacherEmit, {
-									name: userInfo.name,
-									studentSocket: socket.id,
-									queueLength: queuedRows[0].number - 1
-								});
-								socket.emit('teacherRoomJoined', {
-									teacherName: row[0].myname,
-									queueOrJoin: studentBool
+								//based on locked room will decide if the person joins or is put in queue
+								//now!
+								connection.query("SELECT COUNT(*) AS number FROM classrooms WHERE roomID=? AND queueing=1", userInfo.teachID, (err, queuedRows) => {
+									if (err) socket.emit('errorHandle');
+									let studentBool, teacherEmit;
+									if (closedRoom[0].queueing == 1) {
+										studentBool = 1;
+										teacherEmit = "studentHasJoinedTheRoomQueue";
+									} else {
+										studentBool = 0;
+										teacherEmit = "studentHasJoinedTheRoom";
+									}
+									io.to(row[0].teacherSocket).emit(teacherEmit, {
+										name: name,
+										studentSocket: socket.id,
+										queueLength: queuedRows[0].number - 1
+									});
+									socket.emit('teacherRoomJoined', {
+										teacherName: row[0].myname,
+										queueOrJoin: studentBool
+									});
 								});
 							});
 						});
-					});
+					} else {
+						socket.emit('errorHandle');
+					}
 				});
 			} else {
 				socket.emit('teachRoomNoExist');
