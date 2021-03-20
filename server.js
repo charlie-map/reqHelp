@@ -73,13 +73,13 @@ const timeoutCheck = async function(socket) {
 	let timeoutChecker = () => {
 		return new Promise((reject, resolve) => {
 			connection.query("SELECT meetingTimeoutMinutes, meetingTimeoutExpiry FROM teachers WHERE teacherSocket=?", socket, (err, row) => {
-				if (err) reject(err);
+				if (err) resolve(err);
 				if (row.length) {
 					//compare them with current date
-					if (row[0].meetingTimeoutExpiry - Date.now() < row[0].meetingTimeoutMinutes * 60000) reject(true);
-					reject(false);
+					if (row[0].meetingTimeoutExpiry - Date.now() < 0) reject(false);
+					reject(true);
 				} else {
-					reject(false);
+					reject(true);
 				}
 			});
 		});
@@ -104,6 +104,7 @@ app.get("/", (req, res) => {
 });
 
 async function checkForRoomClosure() {
+	console.log("CHECK THE CLOSURE");
 	//grab every single live room, check them for activity
 	//delete the students from the db, and then send teacher back to table
 	connection.query("SELECT teacherSocket, roomID FROM teachers WHERE roomOpen=1", async (err, rows) => {
@@ -112,13 +113,13 @@ async function checkForRoomClosure() {
 			for (let i = 0; i < rows.length; i++) {
 				//for each active row, check how long they have been active
 				let timeout = await timeoutCheck(rows[i].teacherSocket);
-				if (timeout == false) {
+				if (timeout == true) {
 					//close the room
 					connection.query("DELETE FROM classrooms WHERE memberSocket=? AND teacherIdentity IS NULL", rows[i].teacherSocket, (err) => {
 						if (err) socket.emit('errorHandle');
 						io.to(rows[i].roomID).emit('classHasEnded');
-					})
-				} else if (timeout != true) {
+					});
+				} else if (timeout != false) {
 					socket.emit('errorHandle');
 				}
 			}
