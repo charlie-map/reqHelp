@@ -76,10 +76,10 @@ const timeoutCheck = async function(socket) {
 				if (err) resolve(err);
 				if (row.length) {
 					//compare them with current date
-					if (row[0].meetingTimeoutExpiry - Date.now() < 0) reject(false);
-					reject(true);
+					if (row[0].meetingTimeoutExpiry - Date.now() < 0) reject(true);
+					reject(false);
 				} else {
-					reject(true);
+					reject(false);
 				}
 			});
 		});
@@ -104,7 +104,6 @@ app.get("/", (req, res) => {
 });
 
 async function checkForRoomClosure() {
-	console.log("CHECK THE CLOSURE");
 	//grab every single live room, check them for activity
 	//delete the students from the db, and then send teacher back to table
 	connection.query("SELECT teacherSocket, roomID FROM teachers WHERE roomOpen=1", async (err, rows) => {
